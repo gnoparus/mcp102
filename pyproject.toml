@@ -7,7 +7,10 @@ requires-python = ">=3.13"
 dependencies = [
     "anthropic>=0.51.0",
     "arxiv>=2.2.0",
+    "fastmcp>=2.5.2",
+    "loguru>=0.7.3",
     "mcp>=1.7.1",
+    "nest-asyncio>=1.6.0",
     "pypdf2>=3.0.1",
     "python-dotenv>=1.1.0",
     "typing>=3.10.0.0",
