@@ -1,3 +1,0 @@
-npx @modelcontextprotocol/inspector uv run research_mcp_server.py
-
-uv run chatbot_mcp_tools.py
