@@ -9,10 +9,11 @@ from dotenv import load_dotenv
 import anthropic
 from mcp.server.fastmcp import FastMCP
 
+load_dotenv()
+
 PAPER_DIR = "papers" 
 
-
-mcp = FastMCP("research_streamable_http", stateless_http=True) 
+mcp = FastMCP("research_streamable_http", stateless_http=True, port=os.getenv("PORT", 8000)) 
 
 @mcp.prompt()
 def generate_search_prompt(topic: str, num_papers: int = 5) -> str:
