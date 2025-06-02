@@ -1,5 +1,5 @@
-# same as research_mcp_server.py but with SSE transport
-# research_mcp_server_sse.py
+# same as research_mcp_server.py but with Streamable HTTP transport
+# research_mcp_server_streamable_http.py
 
 import arxiv
 import json
