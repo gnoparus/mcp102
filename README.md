@@ -6,4 +6,6 @@
 3. chatbot_mcp_tools.py
     uv run chatbot_mcp_tools.py
 
+4. add resources and prompts to server
+    npx @modelcontextprotocol/inspector uv run research_mcp_server.py
 
