@@ -72,7 +72,7 @@ def get_topic_papers(topic: str) -> str:
     Args:
         topic: The research topic to retrieve papers for
     """
-    topic_dir = topic.lower().replace(" ", "_")
+    topic_dir = topic.lower().replace(" ", "_").replace("%20", "_")
     papers_file = os.path.join(PAPER_DIR, topic_dir, "papers_info.json")
     
     if not os.path.exists(papers_file):
