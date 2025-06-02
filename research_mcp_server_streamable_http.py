@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 PAPER_DIR = "papers" 
 
 
-mcp = FastMCP("research_sse", stateless_http=True) 
+mcp = FastMCP("research_streamable_http", stateless_http=True) 
 
 @mcp.prompt()
 def generate_search_prompt(topic: str, num_papers: int = 5) -> str:
