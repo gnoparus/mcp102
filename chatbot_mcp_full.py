@@ -1,3 +1,4 @@
+import sys
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from mcp import ClientSession, StdioServerParameters
@@ -6,10 +7,17 @@ from contextlib import AsyncExitStack
 import json
 import asyncio
 import nest_asyncio
+from loguru import logger
 
 nest_asyncio.apply()
 
 load_dotenv()
+
+# Initialize loguru
+logger.remove()  # Remove default handler
+logger.add(sys.stderr, level="DEBUG")  # Add console handler
+logger.add("chatbot_mcp_full.log", rotation="1 day", level="DEBUG")  # Add file handler
+
 
 class MCP_ChatBot:
     def __init__(self):
@@ -23,6 +31,7 @@ class MCP_ChatBot:
         self.sessions = {}
 
     async def connect_to_server(self, server_name, server_config):
+        logger.info(f"Connecting to server: {server_name}")
         try:
             server_params = StdioServerParameters(**server_config)
             stdio_transport = await self.exit_stack.enter_async_context(
@@ -32,11 +41,12 @@ class MCP_ChatBot:
             session = await self.exit_stack.enter_async_context(
                 ClientSession(read, write)
             )
+            logger.debug(f"Initializing session for {server_name}")
             await session.initialize()
-            
             
             try:
                 # List available tools
+                logger.debug("Fetching available tools")
                 response = await session.list_tools()
                 for tool in response.tools:
                     self.sessions[tool.name] = session
@@ -45,8 +55,10 @@ class MCP_ChatBot:
                         "description": tool.description,
                         "input_schema": tool.inputSchema
                     })
+                logger.info(f"Added {len(response.tools)} tools from {server_name}")
             
                 # List available prompts
+                logger.debug("Fetching available prompts")
                 prompts_response = await session.list_prompts()
                 if prompts_response and prompts_response.prompts:
                     for prompt in prompts_response.prompts:
@@ -56,30 +68,36 @@ class MCP_ChatBot:
                             "description": prompt.description,
                             "arguments": prompt.arguments
                         })
+                    logger.info(f"Added {len(prompts_response.prompts)} prompts from {server_name}")
+                
                 # List available resources
+                logger.debug("Fetching available resources")
                 resources_response = await session.list_resources()
                 if resources_response and resources_response.resources:
                     for resource in resources_response.resources:
                         resource_uri = str(resource.uri)
                         self.sessions[resource_uri] = session
+                    logger.info(f"Added {len(resources_response.resources)} resources from {server_name}")
             
             except Exception as e:
-                print(f"Error {e}")
+                logger.error(f"Error while fetching capabilities from {server_name}: {e}")
                 
         except Exception as e:
-            print(f"Error connecting to {server_name}: {e}")
+            logger.error(f"Error connecting to {server_name}: {e}")
 
     async def connect_to_servers(self):
+        logger.info("Starting server connections")
         try:
             with open("server_config.json", "r") as file:
                 data = json.load(file)
-            servers = data.get("mcpServers", {})
-            for server_name, server_config in servers.items():
-                await self.connect_to_server(server_name, server_config)
+                servers = data.get("mcpServers", {})
+                logger.debug(f"Found {len(servers)} servers in config")
+                for server_name, server_config in servers.items():
+                    await self.connect_to_server(server_name, server_config)
         except Exception as e:
-            print(f"Error loading server config: {e}")
+            logger.error(f"Error loading server config: {e}")
             raise
-    
+
     async def process_query(self, query):
         messages = [{'role':'user', 'content':query}]
         
