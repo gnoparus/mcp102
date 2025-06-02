@@ -13,6 +13,6 @@ dependencies = [
     "nest-asyncio>=1.6.0",
     "pypdf2>=3.0.1",
     "python-dotenv>=1.1.0",
-    "typing>=3.10.0.0",
+    "typing>=3.7.4.3",
     "uv>=0.7.9",
 ]
