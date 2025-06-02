@@ -11,8 +11,8 @@ PAPER_DIR = "papers"
 
 mcp = FastMCP("research") 
 
-@mcp.resource("papers://folders")
-def get_available_folders() -> str:
+@mcp.resource("papers://topics")
+def get_available_topics() -> str:
     """
     List all available topic folders in the papers directory.
     
