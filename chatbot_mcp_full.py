@@ -99,9 +99,12 @@ class MCP_ChatBot:
             raise
 
     async def process_query(self, query):
+        logger.info("Processing new user query")
+        logger.debug(f"Query content: {query}")
         messages = [{'role':'user', 'content':query}]
         
         while True:
+            logger.debug("Sending request to Anthropic API")
             response = self.anthropic.messages.create(
                 max_tokens = 2024,
                 model = 'claude-3-7-sonnet-20250219', 
@@ -114,6 +117,7 @@ class MCP_ChatBot:
             
             for content in response.content:
                 if content.type == 'text':
+                    logger.debug("Received text response from assistant")
                     print(content.text)
                     assistant_content.append(content)
                 elif content.type == 'tool_use':
@@ -124,6 +128,7 @@ class MCP_ChatBot:
                     # Get session and call tool
                     session = self.sessions.get(content.name)
                     if not session:
+                        logger.error(f"Tool session not found for '{content.name}'")
                         print(f"Tool '{content.name}' not found.")
                         break
                         
@@ -144,33 +149,43 @@ class MCP_ChatBot:
                 break
 
     async def get_resource(self, resource_uri):
+        logger.info(f"Attempting to get resource: {resource_uri}")
         session = self.sessions.get(resource_uri)
         
         # Fallback for papers URIs - try any papers resource session
         if not session and resource_uri.startswith("papers://"):
+            logger.debug("Session not found directly, trying fallback for papers URI")
             for uri, sess in self.sessions.items():
                 if uri.startswith("papers://"):
                     session = sess
+                    logger.debug(f"Found fallback session using {uri}")
                     break
             
         if not session:
+            logger.error(f"Resource '{resource_uri}' not found in any available sessions")
             print(f"Resource '{resource_uri}' not found.")
             return
         
         try:
+            logger.debug(f"Reading resource content for {resource_uri}")
             result = await session.read_resource(uri=resource_uri)
             if result and result.contents:
+                logger.info(f"Successfully retrieved content for {resource_uri}")
                 print(f"\nResource: {resource_uri}")
                 print("Content:")
                 print(result.contents[0].text)
             else:
+                logger.warning(f"No content available for {resource_uri}")
                 print("No content available.")
         except Exception as e:
+            logger.error(f"Error reading resource {resource_uri}: {e}")
             print(f"Error: {e}")
     
     async def list_prompts(self):
         """List all available prompts."""
+        logger.debug("Listing available prompts")
         if not self.available_prompts:
+            logger.info("No prompts available")
             print("No prompts available.")
             return
         
@@ -185,8 +200,10 @@ class MCP_ChatBot:
     
     async def execute_prompt(self, prompt_name, args):
         """Execute a prompt with the given arguments."""
+        logger.info(f"Executing prompt: {prompt_name} with args: {args}")
         session = self.sessions.get(prompt_name)
         if not session:
+            logger.error(f"Session not found for prompt '{prompt_name}'")
             print(f"Prompt '{prompt_name}' not found.")
             return
         
@@ -208,9 +225,11 @@ class MCP_ChatBot:
                 print(f"\nExecuting prompt '{prompt_name}'...")
                 await self.process_query(text)
         except Exception as e:
+            logger.error(f"Error executing prompt {prompt_name}: {e}", exc_info=True)
             print(f"Error: {e}")
     
     async def chat_loop(self):
+        logger.info("Starting chat loop")
         print("\nMCP Chatbot Started!")
         print("Type your queries or 'quit' to exit.")
         print("Use @topics to see available topics")
@@ -225,8 +244,10 @@ class MCP_ChatBot:
                     continue
         
                 if query.lower() == 'quit':
+                    logger.info("User requested to quit")
                     break
                 
+                logger.debug(f"Processing query: {query}")
                 # Check for @resource syntax first
                 if query.startswith('@'):
                     # Remove @ sign  
@@ -244,9 +265,12 @@ class MCP_ChatBot:
                     command = parts[0].lower()
                     
                     if command == '/prompts':
+                        logger.debug("Processing /prompts command")
                         await self.list_prompts()
                     elif command == '/prompt':
+                        logger.debug("Processing /prompt command")
                         if len(parts) < 2:
+                            logger.warning("Invalid /prompt command usage - missing arguments")
                             print("Usage: /prompt <name> <arg1=value1> <arg2=value2>")
                             continue
                         
@@ -261,26 +285,36 @@ class MCP_ChatBot:
                         
                         await self.execute_prompt(prompt_name, args)
                     else:
+                        logger.warning(f"Unknown command received: {command}")
                         print(f"Unknown command: {command}")
                     continue
                 
                 await self.process_query(query)
                     
             except Exception as e:
+                logger.error(f"Error in chat loop: {str(e)}", exc_info=True)
                 print(f"\nError: {str(e)}")
     
     async def cleanup(self):
+        logger.info("Starting cleanup")
         await self.exit_stack.aclose()
+        logger.info("Cleanup completed")
 
 
 async def main():
+    logger.info("Starting MCP Chatbot")
     chatbot = MCP_ChatBot()
     try:
         await chatbot.connect_to_servers()
         await chatbot.chat_loop()
     finally:
         await chatbot.cleanup()
+    logger.info("MCP Chatbot shutdown complete")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        logger.critical(f"Critical error in main: {e}", exc_info=True)
+        sys.exit(1)
