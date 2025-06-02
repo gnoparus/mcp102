@@ -57,6 +57,27 @@ npm install @modelcontextprotocol/inspector
     uv run chatbot_mcp_full.py
     ```
 
+6. **MCP Remote Servers** (`research_mcp_server_sse.py`, `research_mcp_server_streamable_http.py`)
+    - Server-Sent Events (SSE) Implementation
+        ```bash
+        # Terminal 1: Start SSE server
+        uv run research_mcp_server_sse.py
+        
+        # Terminal 2: Launch inspector
+        npx @modelcontextprotocol/inspector
+        # Configure: Transport Type = SSE, URL = http://127.0.0.1:8001/sse
+        ```
+    
+    - Streamable HTTP Implementation
+        ```bash
+        # Terminal 1: Start HTTP server
+        uv run research_mcp_server_streamable_http.py
+        
+        # Terminal 2: Launch inspector
+        npx @modelcontextprotocol/inspector
+        # Configure: Transport Type = Streamable HTTP, URL = http://127.0.0.1:8001/mcp
+        ```
+
 ### Adding Resources
 To extend the server with new resources and prompts:
 1. Add resource files to appropriate directories
