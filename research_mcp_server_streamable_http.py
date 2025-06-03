@@ -1,6 +1,7 @@
 # same as research_mcp_server.py but with Streamable HTTP transport
 # research_mcp_server_streamable_http.py
 
+import asyncio
 import arxiv
 import json
 import os 
@@ -13,7 +14,7 @@ load_dotenv()
 
 PAPER_DIR = "papers" 
 
-mcp = FastMCP("research_streamable_http", stateless_http=True, port=os.getenv("PORT", 8000)) 
+mcp = FastMCP("research_streamable_http", stateless_http=True, port=os.getenv("PORT", 8000), host=os.getenv("HOST", "0.0.0.0"))
 
 @mcp.prompt()
 def generate_search_prompt(topic: str, num_papers: int = 5) -> str:
@@ -190,6 +191,9 @@ def extract_info(paper_id: str) -> str:
     
     return f"There's no saved information related to paper {paper_id}."
 
+async def main():
+    await mcp.run_streamable_http_async()
+
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
-    
+    # mcp.run(transport="streamable-http")
+    asyncio.run(main())    
